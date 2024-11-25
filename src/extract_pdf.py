@@ -37,11 +37,9 @@ pdf_chunks = chunk_text(pdf_text)
 # Índice del último trozo mostrado
 last_index = get_last_chunk_index(index_file)
 
-# Mostrar el siguiente trozo
-next_index = last_index + 1
-if next_index < len(pdf_chunks):
-    print(f"Chunk {next_index + 1}:\n{pdf_chunks[next_index]}\n")
-    update_last_chunk_index(index_file, next_index)
-else:
-    print("No hay más trozos para mostrar.")
-    update_last_chunk_index(index_file, -1)
+# Mostrar todos los trozos
+for i in range(last_index + 1, len(pdf_chunks)):
+    print(f"Chunk {i + 1}:\n{pdf_chunks[i]}\n")
+
+# Actualizar el índice del último trozo mostrado
+update_last_chunk_index(index_file, len(pdf_chunks) - 1)
