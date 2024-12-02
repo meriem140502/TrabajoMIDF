@@ -121,11 +121,13 @@ def store_embeddings_in_qdrant(chunks, embeddings, qdrant_client, collection_nam
 
 if __name__ == '__main__':
     # Ruta del archivo PDF
-    file_path = r'C:\Users\ldebe\Downloads\CV.pdf'
+    file_path = r'C:\Users\Usuario\Desktop\MIDF\TICs\TrabajoMIDF\src\CV_Meryem.pdf'
     
     # Cargar y trocear el PDF
     pdf_text, pdf_images = extract_text_and_images(file_path)
     pdf_chunks = chunk_text(pdf_text)
+    
+    # print(pdf_chunks)
 
     # Cargar el modelo
     model_name = 'all-MiniLM-L6-v2'
@@ -133,16 +135,25 @@ if __name__ == '__main__':
 
     # Paso 2: Generar embeddings para los chunks
     embeddings = generate_embeddings(pdf_chunks)
+    
 
     # Paso 3: Conectar a Qdrant
     qdrant_client = QdrantClient(":memory:")  # Usa Qdrant en memoria (para pruebas locales)
+    # print(qdrant_client.get_collections())
+    
+
+
     # Usa `QdrantClient(host="localhost", port=6333)` si tienes un servidor Qdrant corriendo
 
     # Paso 4: Almacenar embeddings en Qdrant
     store_embeddings_in_qdrant(pdf_chunks, embeddings, qdrant_client)
+    
+    colecciones = qdrant_client.get_collections()
+    print("colecciones =" ,colecciones)
 
-    print(f"Embeddings generados y almacenados en Qdrant. Total chunks: {len(pdf_chunks)}")
+    # print(f"Embeddings generados y almacenados en Qdrant. Total chunks: {len(pdf_chunks)}")
 
+<<<<<<< HEAD
     # Definir una pregunta
     # question = "¿Cual es la fecha de la graduación?"
 
@@ -152,3 +163,26 @@ if __name__ == '__main__':
     # print(f"Pregunta: {question}\n")
     # for context in relevant_context:
     #     print(f"Contexto relevante: {context}")
+=======
+    # # Definir una pregunta
+    question = "Formación académica"
+
+    
+    # question = "¿Cual es la fecha de la graduación?"
+
+    # # Buscar los contextos más relevantes en Qdrant
+    relevant_context, relevant_embeddings = get_relevant_context(
+    question=question,
+    model=model,  # El modelo de embeddings que cargaste antes
+    qdrant_client=qdrant_client,
+    collection_name="pdf_chunks",  # La colección que creaste
+    top_k=3  # Número de resultados relevantes que deseas obtener
+)
+
+    
+    # relevant_context, relevant_embeddings = get_relevant_context(question, model, qdrant_client)
+    
+    # print("\nContextos más relevantes encontrados:")
+    # for idx, context in enumerate(relevant_context):
+    #     print(f"Contexto {idx + 1}: {context}")
+>>>>>>> 627dc2fbd56e0f27523de55ac0bed27a57be9cb0
