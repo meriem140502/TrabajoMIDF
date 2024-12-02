@@ -1,11 +1,12 @@
-import fitz
-import os
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, util
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
+import fitz
+import torch
+
 
 def extract_text_and_images(file_path):
-    ''' Funcion encargada de extraer la información del pdf'''
+    '''Función encargada de extraer la información del PDF'''
     doc = fitz.open(file_path)
     text = ''
     images = []
@@ -15,14 +16,16 @@ def extract_text_and_images(file_path):
         images.extend(page.get_images(full=True))
     return text, images
 
+
 def chunk_text(text, chunk_size=75):
-    ''' División en chunks del texto'''
+    '''División en chunks del texto'''
     words = text.split()
     chunks = [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
     return chunks
 
+
 def generate_embeddings(chunks, model_name='all-MiniLM-L6-v2'):
-    ''' Genera embeddings para los chunks de texto '''
+    '''Genera embeddings para los chunks de texto'''
     model = SentenceTransformer(model_name)  # Carga el modelo preentrenado
     embeddings = model.encode(chunks, show_progress_bar=True)  # Genera embeddings para cada chunk
     
@@ -32,17 +35,25 @@ def generate_embeddings(chunks, model_name='all-MiniLM-L6-v2'):
     
     return embeddings
 
+
 def store_embeddings_in_qdrant(chunks, embeddings, qdrant_client, collection_name="pdf_chunks"):
-    ''' Almacena los embeddings en Qdrant '''
+    '''Almacena los embeddings en Qdrant'''
+    # Verificamos si la colección ya existe
     if not qdrant_client.collection_exists(collection_name):
         print(f"Collection {collection_name} not found. Creating collection.")
+        
+        # Aseguramos que la dimensión de los vectores coincide con los embeddings generados
+        vector_size = len(embeddings[0])  # Tamaño del vector del embedding
         qdrant_client.create_collection(
             collection_name=collection_name,
-            vectors_config={"size": len(embeddings[0]), "distance": "Cosine"}  # Dimensión del vector y distancia
+            vectors_config={
+                "size": vector_size,  # Establecemos la dimensión de los vectores
+                "distance": "Cosine"  # Tipo de distancia para la búsqueda
+            }
         )
     else:
         print(f"Collection {collection_name} exists.")
-    
+
     # Agregar los embeddings como puntos en la colección
     points = [
         PointStruct(
@@ -53,14 +64,71 @@ def store_embeddings_in_qdrant(chunks, embeddings, qdrant_client, collection_nam
         for i, (embedding, chunk) in enumerate(zip(embeddings, chunks))
     ]
     qdrant_client.upsert(collection_name=collection_name, points=points)
+
+
+def get_relevant_context(question, model, qdrant_client, collection_name="pdf_chunks", top_k=3):
+    '''Busca los contextos más relevantes desde Qdrant basado en una consulta del usuario'''
+    # Verificar si la colección en Qdrant no está vacía
+    collection_info = qdrant_client.get_collection(collection_name=collection_name)
+    if collection_info.status != "green" or collection_info.points_count == 0:
+        print("La colección en Qdrant está vacía o no es accesible.")
+        return [], []
+
+    # Generar embedding para el input del usuario
+    input_embedding = model.encode([question])
+
+    # Asegurarse de que el vector de entrada está en el formato correcto (lista)
+    input_embedding = input_embedding.tolist()[0]
+
+    # Realizar la búsqueda en Qdrant usando el embedding generado
+    search_result = qdrant_client.search(
+        collection_name=collection_name,
+        query_vector=input_embedding,  # Se pasa como lista
+        limit=top_k
+    )
+
+    if not search_result:
+        print("No se encontraron resultados relevantes.")
+        return [], []
+
+    # Extraer los resultados relevantes
+    relevant_context = []
+    relevant_embeddings = []
     
+    # Filtrar solo aquellos puntos que contienen un vector válido
+    for hit in search_result:
+        if hit.vector is not None:
+            relevant_context.append(hit.payload["chunk"])
+            relevant_embeddings.append(hit.vector)
+    
+    if not relevant_context:
+        print("No se encontraron contextos relevantes con embeddings válidos.")
+        return [], []
+
+    # Calcular la similitud coseno explícita entre el input y los embeddings de Qdrant
+    cos_scores = [
+        util.cos_sim(torch.tensor(input_embedding), torch.tensor(hit.vector)).item()
+        for hit in search_result if hit.vector is not None
+    ]
+
+    # Imprimir las similitudes calculadas
+    for idx, score in enumerate(cos_scores):
+        print(f"Contexto {idx + 1}: {relevant_context[idx]} (Similitud coseno: {score})")
+
+    return relevant_context, relevant_embeddings
+
+
 if __name__ == '__main__':
-    # ruta del archivo PDF
+    # Ruta del archivo PDF
     file_path = r'C:\Users\ldebe\Downloads\CV.pdf'
     
     # Cargar y trocear el PDF
     pdf_text, pdf_images = extract_text_and_images(file_path)
     pdf_chunks = chunk_text(pdf_text)
+
+    # Cargar el modelo
+    model_name = 'all-MiniLM-L6-v2'
+    model = SentenceTransformer(model_name)
 
     # Paso 2: Generar embeddings para los chunks
     embeddings = generate_embeddings(pdf_chunks)
@@ -73,3 +141,13 @@ if __name__ == '__main__':
     store_embeddings_in_qdrant(pdf_chunks, embeddings, qdrant_client)
 
     print(f"Embeddings generados y almacenados en Qdrant. Total chunks: {len(pdf_chunks)}")
+
+    # Definir una pregunta
+    question = "¿Cual es la fecha de la graduación?"
+
+    # Buscar los contextos más relevantes en Qdrant
+    relevant_context, relevant_embeddings = get_relevant_context(question, model, qdrant_client)
+
+    print(f"Pregunta: {question}\n")
+    for context in relevant_context:
+        print(f"Contexto relevante: {context}")
