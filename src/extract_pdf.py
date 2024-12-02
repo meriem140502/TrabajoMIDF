@@ -66,56 +66,57 @@ def store_embeddings_in_qdrant(chunks, embeddings, qdrant_client, collection_nam
     qdrant_client.upsert(collection_name=collection_name, points=points)
 
 
-def get_relevant_context(question, model, qdrant_client, collection_name="pdf_chunks", top_k=3):
-    '''Busca los contextos más relevantes desde Qdrant basado en una consulta del usuario'''
+# def get_relevant_context(question, model, qdrant_client, collection_name="pdf_chunks", top_k=3):
+#     '''Busca los contextos más relevantes desde Qdrant basado en una consulta del usuario'''
     # Verificar si la colección en Qdrant no está vacía
-    collection_info = qdrant_client.get_collection(collection_name=collection_name)
-    if collection_info.status != "green" or collection_info.points_count == 0:
-        print("La colección en Qdrant está vacía o no es accesible.")
-        return [], []
+    # collection_info = qdrant_client.get_collection(collection_name=collection_name)
+    # if collection_info.status != "green" or collection_info.points_count == 0:
+    #     print("La colección en Qdrant está vacía o no es accesible.")
+    #     return [], []
 
     # Generar embedding para el input del usuario
-    input_embedding = model.encode([question])
+    # input_embedding = model.encode([question])
 
     # Asegurarse de que el vector de entrada está en el formato correcto (lista)
-    input_embedding = input_embedding.tolist()[0]
+    #input_embedding = input_embedding.tolist()[0]
 
     # Realizar la búsqueda en Qdrant usando el embedding generado
-    search_result = qdrant_client.search(
-        collection_name=collection_name,
-        query_vector=input_embedding,  # Se pasa como lista
-        limit=top_k
-    )
+    # search_result = qdrant_client.search(
+    #     collection_name=collection_name,
+    #     query_vector=input_embedding,  # Se pasa como lista
+    #     limit=top_k
+    # )
 
-    if not search_result:
-        print("No se encontraron resultados relevantes.")
-        return [], []
+
+    # if not search_result:
+    #     print("No se encontraron resultados relevantes.")
+    #     return [], []
 
     # Extraer los resultados relevantes
-    relevant_context = []
-    relevant_embeddings = []
+    # relevant_context = []
+    # relevant_embeddings = []
     
     # Filtrar solo aquellos puntos que contienen un vector válido
-    for hit in search_result:
-        if hit.vector is not None:
-            relevant_context.append(hit.payload["chunk"])
-            relevant_embeddings.append(hit.vector)
+    # for hit in search_result:
+    #     if hit.vector is not None:
+    #         relevant_context.append(hit.payload["chunk"])
+    #         relevant_embeddings.append(hit.vector)
     
-    if not relevant_context:
-        print("No se encontraron contextos relevantes con embeddings válidos.")
-        return [], []
+    # if not relevant_context:
+    #     print("No se encontraron contextos relevantes con embeddings válidos.")
+    #     return [], []
 
     # Calcular la similitud coseno explícita entre el input y los embeddings de Qdrant
-    cos_scores = [
-        util.cos_sim(torch.tensor(input_embedding), torch.tensor(hit.vector)).item()
-        for hit in search_result if hit.vector is not None
-    ]
+    # cos_scores = [
+    #     util.cos_sim(torch.tensor(input_embedding), torch.tensor(hit.vector)).item()
+    #     for hit in search_result if hit.vector is not None
+    # ]
 
     # Imprimir las similitudes calculadas
-    for idx, score in enumerate(cos_scores):
-        print(f"Contexto {idx + 1}: {relevant_context[idx]} (Similitud coseno: {score})")
+    # for idx, score in enumerate(cos_scores):
+    #     print(f"Contexto {idx + 1}: {relevant_context[idx]} (Similitud coseno: {score})")
 
-    return relevant_context, relevant_embeddings
+    # return relevant_context, relevant_embeddings
 
 
 if __name__ == '__main__':
@@ -143,11 +144,11 @@ if __name__ == '__main__':
     print(f"Embeddings generados y almacenados en Qdrant. Total chunks: {len(pdf_chunks)}")
 
     # Definir una pregunta
-    question = "¿Cual es la fecha de la graduación?"
+    # question = "¿Cual es la fecha de la graduación?"
 
     # Buscar los contextos más relevantes en Qdrant
-    relevant_context, relevant_embeddings = get_relevant_context(question, model, qdrant_client)
+    # relevant_context, relevant_embeddings = get_relevant_context(question, model, qdrant_client)
 
-    print(f"Pregunta: {question}\n")
-    for context in relevant_context:
-        print(f"Contexto relevante: {context}")
+    # print(f"Pregunta: {question}\n")
+    # for context in relevant_context:
+    #     print(f"Contexto relevante: {context}")
