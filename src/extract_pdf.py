@@ -73,14 +73,24 @@ def generate_natural_language_response(results, question, model_name='llama3.2')
     #client = ollama.Client()
     metadatas = results['metadatas'][0] 
     texts = [metadata['chunk'] for metadata in metadatas]
-    prompt = f"Basado en el siguiente texto:\n\n{' '.join(texts)}\n\nResponde a la siguiente pregunta: {question}"
+    prompt = f"Responde a la pregunta basandote ÚNICA Y EXCLUSIVAMENTE en el siguiente texto:\n\n{' '.join(texts)}\n\n La pregunta: {question}"
     
-    result = subprocess.run(['ollama','run','llama3.2', prompt], capture_output=True)
+    #result = subprocess.run(['ollama','run','llama3.2', prompt], capture_output=True)
     #response = client.chat(model_name, messages=[{'role': 'user', 'content': prompt}])
     
     #print("Respuesta de Ollama:", response)
-    print("Respuesta de Ollama:", result.stdout.strip())
-    return result.stdout.strip()#response
+    #print("Respuesta de Ollama:", result.stdout.strip())
+
+
+    
+    # Llamar a la API de Ollama para generar la respuesta
+    ollama_host_url = "http://localhost:11434"
+    client = ollama.Client(host=ollama_host_url)
+    result = client.chat(model=model_name, messages=[{'role': 'user', 'content': prompt}])
+    print('LA RESPUESTA ES \n:', result)
+    return result['message']['content']
+
+    #return result.stdout.strip()#response
 
 
 def main(file_path, collection_name="pdf_chunks", top_k=3):
@@ -101,7 +111,7 @@ def main(file_path, collection_name="pdf_chunks", top_k=3):
     store_embeddings_in_chroma(collection, embeddings, pdf_chunks)
 
     # Paso 5: Definir la consulta del usuario
-    question = "disposiciones del ejecutivo con rango de ley"
+    question = "Qué es un protocolo http?"
     question_embedding = generate_embeddings([question], model)[0] 
 
     # Paso 6: Buscar contextos relevantes
@@ -114,5 +124,5 @@ def main(file_path, collection_name="pdf_chunks", top_k=3):
 
 # Llamada a la función principal con el archivo PDF
 if __name__ == "__main__":
-    file_path = r'C:\Users\ldebe\Downloads\Tema_Derecho.pdf'
+    file_path = r'C:/Users/claralado/Downloads/Servidor_Web-1.pdf'
     main(file_path)
