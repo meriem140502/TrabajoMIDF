@@ -4,17 +4,16 @@ from chromadb.config import Settings
 import fitz
 import torch
 import ollama
-
+import subprocess
 
 def extract_text(file_path):
     '''Función encargada de extraer solo el texto de un PDF'''
     doc = fitz.open(file_path)
-    text = ''  # Variable para almacenar el texto
+    text = '' 
     for page_num in range(len(doc)):
         page = doc.load_page(page_num)
-        text += page.get_text()  # Extraer el texto de cada página
-    return text  # Solo devolver el texto
-
+        text += page.get_text()
+    return text 
 
 
 def chunk_text(text, chunk_size=30):
@@ -25,9 +24,8 @@ def chunk_text(text, chunk_size=30):
 
 
 def connect_to_chroma():
-    client = chromadb.Client()  # Usar el constructor sin necesidad de configuraciones antiguas
+    client = chromadb.Client() 
     return client
-
 
 def create_or_get_collection(client, collection_name="pdf_chunks"):
     """Crear o acceder a una colección de Chroma"""
@@ -43,13 +41,8 @@ def create_or_get_collection(client, collection_name="pdf_chunks"):
 def generate_embeddings(chunks, model):
     """Generar embeddings para los chunks de texto"""
     embeddings = model.encode(chunks, show_progress_bar=True)
-    # Imprimir los embeddings
-    
-    """for i, embedding in enumerate(embeddings):
-        print(f"Embedding {i}: {embedding}")
-    """
     return embeddings
-    
+
 
 def store_embeddings_in_chroma(collection, embeddings, chunks):
     """Almacenar los embeddings en Chroma"""
@@ -57,7 +50,7 @@ def store_embeddings_in_chroma(collection, embeddings, chunks):
         {"id": str(i), "embedding": embedding, "metadata": {"chunk": chunk}}
         for i, (embedding, chunk) in enumerate(zip(embeddings, chunks))
     ]
-    collection.add(
+    collection.upsert(
         documents=[point["metadata"]["chunk"] for point in points],
         metadatas=[point["metadata"] for point in points],
         embeddings=[point["embedding"] for point in points],
@@ -75,16 +68,30 @@ def search_in_chroma(collection, query_embedding, top_k=1):
     return results
 
 
+def generate_natural_language_response(results, question, model_name='llama3.2'):
+    """Generar una respuesta en lenguaje natural usando Ollama"""
+    #client = ollama.Client()
+    metadatas = results['metadatas'][0] 
+    texts = [metadata['chunk'] for metadata in metadatas]
+    prompt = f"Basado en el siguiente texto:\n\n{' '.join(texts)}\n\nResponde a la siguiente pregunta: {question}"
+    
+    result = subprocess.run(['ollama','run','llama3.2', prompt], capture_output=True)
+    #response = client.chat(model_name, messages=[{'role': 'user', 'content': prompt}])
+    
+    #print("Respuesta de Ollama:", response)
+    print("Respuesta de Ollama:", result.stdout.strip())
+    return result.stdout.strip()#response
+
+
 def main(file_path, collection_name="pdf_chunks", top_k=3):
     # Paso 1: Cargar texto y dividir en chunks (ajustar según tu necesidad)
-    pdf_text = extract_text(file_path)  # Suponiendo que ya tienes esta función
-    pdf_chunks = chunk_text(pdf_text)  # Ajusta según la función que tengas para dividir el texto
+    pdf_text = extract_text(file_path) 
+    pdf_chunks = chunk_text(pdf_text) 
 
     # Paso 2: Generar embeddings
     model_name='all-MiniLM-L6-v2'
     model = SentenceTransformer(model_name)
     embeddings = generate_embeddings(pdf_chunks, model)
-
 
     # Paso 3: Conectar a Chroma y crear la colección si no existe
     client = connect_to_chroma()
@@ -94,81 +101,18 @@ def main(file_path, collection_name="pdf_chunks", top_k=3):
     store_embeddings_in_chroma(collection, embeddings, pdf_chunks)
 
     # Paso 5: Definir la consulta del usuario
-    question = "¿que objetivo tiene una ley organica?"
-    question_embedding = generate_embeddings([question], model)[0]  # Generar embedding de la consulta
+    question = "disposiciones del ejecutivo con rango de ley"
+    question_embedding = generate_embeddings([question], model)[0] 
 
     # Paso 6: Buscar contextos relevantes
     results = search_in_chroma(collection, question_embedding, top_k)
+    print(len(results), type(results))
 
-    # Mostrar los resultados
-    for result in results['documents']:
-        print(f"Contexto relevante: {result}")
+    # Paso 7: Llamar a Ollama
+    response = generate_natural_language_response(results, question, model_name='llama3.2')
+    print("Respuesta generada:", response)
 
-# Llamar a la función principal con el archivo PDF
+# Llamada a la función principal con el archivo PDF
 if __name__ == "__main__":
     file_path = r'C:\Users\ldebe\Downloads\Tema_Derecho.pdf'
     main(file_path)
-
-# if __name__ == '__main__':
-#     # Ruta del archivo PDF
-#     file_path = r'C:\Users\Usuario\Desktop\MIDF\TICs\TrabajoMIDF\src\CV_Meryem.pdf'
-    
-#     # Cargar y trocear el PDF
-#     pdf_text, pdf_images = extract_text_and_images(file_path)
-#     pdf_chunks = chunk_text(pdf_text)
-    
-#     # print(pdf_chunks)
-
-#     # Cargar el modelo
-#     model_name = 'all-MiniLM-L6-v2'
-#     model = SentenceTransformer(model_name)
-
-#     # Paso 2: Generar embeddings para los chunks
-#     embeddings = generate_embeddings(pdf_chunks)
-    
-
-#     # Paso 3: Conectar a Qdrant
-#     qdrant_client = QdrantClient(":memory:")  # Usa Qdrant en memoria (para pruebas locales)
-#     # print(qdrant_client.get_collections())
-    
-
-
-#     # Usa `QdrantClient(host="localhost", port=6333)` si tienes un servidor Qdrant corriendo
-
-#     # Paso 4: Almacenar embeddings en Qdrant
-#     store_embeddings_in_qdrant(pdf_chunks, embeddings, qdrant_client)
-    
-#     # colecciones = qdrant_client.get_collections()
-#     # print("colecciones =" ,colecciones)
-    
-#     # Verificar el contenido de la colección
-#     collection_info = qdrant_client.get_collection(collection_name="pdf_chunks")
-#     print(f"Información de la colección: {collection_info}")
-
-#     # Listar los puntos almacenados
-#     points = qdrant_client.scroll(collection_name="pdf_chunks", limit=10)
-#     print("Puntos en la colección:", points)
-
-#     # print(f"Embeddings generados y almacenados en Qdrant. Total chunks: {len(pdf_chunks)}")
-
-#     # # Definir una pregunta
-#     question = "Formación académica"
-
-    
-#     # question = "¿Cual es la fecha de la graduación?"
-
-#     # # Buscar los contextos más relevantes en Qdrant
-#     relevant_context, relevant_embeddings = get_relevant_context(
-#     question=question,
-#     model=model,  # El modelo de embeddings que cargaste antes
-#     qdrant_client=qdrant_client,
-#     collection_name="pdf_chunks",  # La colección que creaste
-#     top_k=3  # Número de resultados relevantes que deseas obtener
-# )
-
-    
-#     # relevant_context, relevant_embeddings = get_relevant_context(question, model, qdrant_client)
-    
-#     # print("\nContextos más relevantes encontrados:")
-#     # for idx, context in enumerate(relevant_context):
-#     #     print(f"Contexto {idx + 1}: {context}")
