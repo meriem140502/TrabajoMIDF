@@ -31,12 +31,12 @@ def extract_text(file_path):
         raise ValueError(f"El archivo con extensión {file_extension} no es compatible. Solo se aceptan .pdf y .json.")
 
 
-def chunk_text(text, bool, chunk_size=100):
+def chunk_text(texto, bool, chunk_size=100):
     """Divide el texto en fragmentos de tamaño especificado."""
     if bool:
-        text['text'].tolist()
+        return texto['text'].tolist()
     else:
-        words = text.split()
+        words = texto.split()
         return [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
 
 def connect_to_chroma():
