@@ -33,12 +33,12 @@
             top: 0;
             width: 100%;
             text-align: center;
-            background-color: rgba(233, 230, 230, 0.8); /* Grisáceo más crudo */
+            background-color: rgba(233, 230, 230, 0.8);
             z-index: 1000;
         }
 
         .container {
-            margin-top: 180px; /* Reducido para acercar al título */
+            margin-top: 180px;
             width: 100%;
             display: flex;
             flex-direction: column;
@@ -46,7 +46,6 @@
             overflow-y: auto;
             height: calc(100vh - 180px);
         }
-
 
         button {
             font-size: 26px;
@@ -77,13 +76,13 @@
 
         #btn_select_pdf {
             background: url('../static/clip2.png') no-repeat center center;
-            background-size: 90%; /* Hacer que la imagen sea más pequeña dentro del círculo */
-            background-position: center center; /* Centrar la imagen */
-            width: 200px; /* Mantener el tamaño del círculo */
+            background-size: 90%;
+            background-position: center center;
+            width: 200px;
             height: 200px;
-            padding: 20px; /* Espacio entre la imagen y el borde del círculo */
+            padding: 20px;
             filter: invert(11%) sepia(100%) saturate(1000%) hue-rotate(240deg) brightness(90%) contrast(100%);
-            border-radius: 50%; /* Hacer que sea un círculo */
+            border-radius: 50%;
             transition: transform 0.3s;
             margin-bottom: 30px;
             margin-top: 50px;
@@ -99,28 +98,29 @@
             font-size: 20px;
             color: #0e023a;
             margin-top: 10px;
+            font-weight: bold;
         }
 
         #btn_ask_question, #btn_send_question {
             margin-top: 110px;
-            padding: 28px 37px;
-            font-size: 40x;
+            padding: 18px 28px;
+            font-size: 32px;
         }
 
         #questionInput {
-        font-size: 20px;
-        padding: 20px;
-        width: 80%;
-        margin-top: 10px; /* Ajustado para evitar recorte */
-        margin-bottom: 15px;
-        border: 2px solid #0e023a;
-        border-radius: 25px;
+            font-size: 20px;
+            padding: 20px;
+            width: 80%;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #0e023a;
+            border-radius: 25px;
         }
 
         #response {
             font-size: 18px;
             color: #333333;
-            margin-top: 0dvb;
+            margin-top: 10px;
             padding: 15px;
             border: 2px solid #0e023a;
             border-radius: 25px;
@@ -129,14 +129,25 @@
             text-align: center;
         }
 
+        #retry_question {
+            text-align: center;
+        }
+
         #retry_question p {
             font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        #retry_question div {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
         }
 
         #btn_yes, #btn_no {
-        font-size: 18px; /* Reducido */
-        padding: 15px 30px; /* Reducido */
-        margin: 10px 15px; /* Ajustado para más separación */
+            font-size: 18px;
+            padding: 15px 30px;
+            margin: 10px 15px;
         }
     </style>
 </head>
@@ -145,15 +156,17 @@
     <div class="container">
         <input type="file" id="pdfFile" accept="application/pdf" class="hidden">
         <button id="btn_select_pdf"></button>
-        <div id="adjuntar_pdf" class="hidden">Adjuntar PDF</div>
-        <button id="btn_ask_question" class="hidden">Realizar Pregunta</button>
+        <div id="adjuntar_pdf">Adjuntar PDF</div>
+        <button id="btn_ask_question" class="hidden">Realizar pregunta</button>
         <input type="text" id="questionInput" class="hidden" placeholder="Escribe tu pregunta aquí...">
-        <button id="btn_send_question" class="hidden">Enviar Pregunta</button>
+        <button id="btn_send_question" class="hidden">Enviar pregunta</button>
         <div id="response" class="hidden"></div>
         <div id="retry_question" class="hidden">
             <p>¿Desea realizar otra cuestión?</p>
-            <button id="btn_yes">Sí</button>
-            <button id="btn_no">No</button>
+            <div>
+                <button id="btn_yes">Sí</button>
+                <button id="btn_no">No</button>
+            </div>
         </div>
     </div>
 
