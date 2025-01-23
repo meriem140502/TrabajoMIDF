@@ -5,21 +5,39 @@ from sentence_transformers import SentenceTransformer
 import chromadb
 import fitz
 import language_tool_python
+from telegram import extraer_texto_por_id
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
 def extract_text(file_path):
     """Extrae el texto de un PDF y lo corrige gramaticalmente."""
-    doc = fitz.open(file_path)
-    text = '\n'.join(page.get_text() for page in doc)
-    tool = language_tool_python.LanguageTool('es')
-    corrected_text = language_tool_python.utils.correct(text, tool.check(text))
-    return corrected_text
+    _, file_extension = os.path.splitext(file_path)
 
-def chunk_text(text, chunk_size=100):
+    if file_extension.lower() == '.pdf':
+        doc = fitz.open(file_path)
+        text = '\n'.join(page.get_text() for page in doc)
+        tool = language_tool_python.LanguageTool('es')
+        corrected_text = language_tool_python.utils.correct(text, tool.check(text))
+        return corrected_text, _
+    
+    elif file_extension.lower() == '.json': 
+        with open(file_path, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            corrected_test = extraer_texto_por_id(data)
+            bool=True
+        return corrected_test, bool
+    else:
+        # Lanza una excepción si no es PDF ni JSON
+        raise ValueError(f"El archivo con extensión {file_extension} no es compatible. Solo se aceptan .pdf y .json.")
+
+
+def chunk_text(text, bool, chunk_size=100):
     """Divide el texto en fragmentos de tamaño especificado."""
-    words = text.split()
-    return [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
+    if bool:
+        text['text'].tolist()
+    else:
+        words = text.split()
+        return [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
 
 def connect_to_chroma():
     """Conecta con la base de datos ChromaDB."""
