@@ -18,7 +18,7 @@ def extract_text(file_path):
         text = '\n'.join(page.get_text() for page in doc)
         tool = language_tool_python.LanguageTool('es')
         corrected_text = language_tool_python.utils.correct(text, tool.check(text))
-        return corrected_text, _
+        return corrected_text, False
     
     elif file_extension.lower() == '.json': 
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -86,8 +86,8 @@ def process_pdf():
     os.makedirs('./uploads', exist_ok=True)
     file.save(file_path)
     
-    text = extract_text(file_path)
-    chunks = chunk_text(text)
+    text, bool = extract_text(file_path)
+    chunks = chunk_text(text, bool)
     model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2') #acepta varios idiomas
     embeddings = generate_embeddings(chunks, model)
     collection = create_or_get_collection(connect_to_chroma())
