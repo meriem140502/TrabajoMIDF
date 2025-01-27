@@ -6,7 +6,7 @@
     <title>Asistente AI</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <style>
-        body {
+       body {
             background-image: url('../static/fondo2.jpg');
             background-size: cover;
             background-repeat: no-repeat;
@@ -33,7 +33,7 @@
             top: 0;
             width: 100%;
             text-align: center;
-            background-color: rgba(233, 230, 230, 0.8);
+            background-color: rgba(247, 247, 247, 0.8);
             z-index: 1000;
         }
 
@@ -84,14 +84,39 @@
             filter: invert(11%) sepia(100%) saturate(1000%) hue-rotate(240deg) brightness(90%) contrast(100%);
             border-radius: 50%;
             transition: transform 0.3s;
-            margin-bottom: 30px;
-            margin-top: 50px;
+            margin-bottom: 20px;
+            margin-top: 30px; 
             background-color: transparent;
             border: 7px solid transparent;
         }
 
         #btn_select_pdf:hover {
             transform: translateY(-2px);
+        }
+
+        .loader {
+        position: relative;
+        top: 0px;
+        width: 40px;
+        height: 40px;
+        border: 4px solid #0e023a;
+        border-left-color: #f0eded;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-top: 10px;
+        }
+
+        @keyframes spin {
+         from {
+            transform: rotate(0deg);
+        }
+        to   {
+            transform: rotate(360deg);
+             }
+         }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         #adjuntar_pdf {
@@ -102,7 +127,7 @@
         }
 
         #btn_ask_question, #btn_send_question {
-            margin-top: 110px;
+            margin-top: 50px;
             padding: 18px 28px;
             font-size: 32px;
         }
@@ -154,12 +179,14 @@
 <body>
     <h1>Asistente IA</h1>
     <div class="container">
-        <input type="file" id="pdfFile" accept="application/pdf" class="hidden">
+        <input type="file" id="pdfFile" accept="application/pdf, application/json" class="hidden">
         <button id="btn_select_pdf"></button>
-        <div id="adjuntar_pdf">Adjuntar PDF</div>
+        <div id="adjuntar_pdf">Adjuntar archivo</div>
+        <div id="loader_pdf" class="loader hidden"></div>
         <button id="btn_ask_question" class="hidden">Realizar pregunta</button>
         <input type="text" id="questionInput" class="hidden" placeholder="Escribe tu pregunta aquí...">
         <button id="btn_send_question" class="hidden">Enviar pregunta</button>
+        <div id="loader_response" class="loader hidden"></div>
         <div id="response" class="hidden"></div>
         <div id="retry_question" class="hidden">
             <p>¿Desea realizar otra cuestión?</p>
@@ -174,36 +201,41 @@
         document.getElementById('btn_select_pdf').addEventListener('click', function() {
             document.getElementById('pdfFile').click();
         });
-
+    
         document.getElementById('pdfFile').addEventListener('change', function() {
             const fileInput = document.getElementById('pdfFile');
             const file = fileInput.files[0];
             if (file) {
                 const formData = new FormData();
                 formData.append('file', file);
-
+    
+                document.getElementById('loader_pdf').classList.remove('hidden');
+    
                 fetch('/process_pdf', {
                     method: 'POST',
                     body: formData
                 })
                 .then(response => response.json())
                 .then(() => {
+                    document.getElementById('loader_pdf').classList.add('hidden');
                     document.getElementById('btn_select_pdf').classList.add('hidden');
                     document.getElementById('adjuntar_pdf').classList.add('hidden');
                     document.getElementById('btn_ask_question').classList.remove('hidden');
                 });
             }
         });
-
+    
         document.getElementById('btn_ask_question').addEventListener('click', function() {
             document.getElementById('btn_ask_question').classList.add('hidden');
             document.getElementById('questionInput').classList.remove('hidden');
             document.getElementById('btn_send_question').classList.remove('hidden');
         });
-
+    
         document.getElementById('btn_send_question').addEventListener('click', function() {
             const question = document.getElementById('questionInput').value;
             if (question) {
+                document.getElementById('loader_response').classList.remove('hidden');
+    
                 fetch('/ask_question', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -211,6 +243,7 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    document.getElementById('loader_response').classList.add('hidden');
                     document.getElementById('response').textContent = data.response;
                     document.getElementById('response').classList.remove('hidden');
                     document.getElementById('btn_send_question').classList.add('hidden');
@@ -218,7 +251,7 @@
                 });
             }
         });
-
+    
         document.getElementById('btn_yes').addEventListener('click', function() {
             document.getElementById('retry_question').classList.add('hidden');
             document.getElementById('response').classList.add('hidden');
@@ -226,7 +259,7 @@
             document.getElementById('questionInput').classList.remove('hidden');
             document.getElementById('btn_send_question').classList.remove('hidden');
         });
-
+    
         document.getElementById('btn_no').addEventListener('click', function() {
             location.reload();
         });
