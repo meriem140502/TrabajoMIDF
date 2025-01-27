@@ -10,8 +10,21 @@ from telegram import extraer_texto_por_id
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
+
+def connect_to_chroma():
+    """Conecta con la base de datos ChromaDB."""
+    return chromadb.PersistentClient(path="./chroma_db")
+
+def create_or_get_collection(client, collection_name="pdf_chunks"):
+    """Accede a la colección en ChromaDB."""
+    return client.get_or_create_collection(collection_name, metadata={"hnsw:space": "cosine"})
+
+def clear_collection(collection):
+    """Elimina todos los documentos previos en la colección."""
+    collection.delete(ids=collection.get()["ids"]) 
+
 def extract_text(file_path):
-    """Extrae el texto de un PDF y lo corrige gramaticalmente."""
+    """Extrae el texto de un PDF o JSON y lo corrige gramaticalmente."""
     _, file_extension = os.path.splitext(file_path)
 
     if file_extension.lower() == '.pdf':
@@ -24,29 +37,19 @@ def extract_text(file_path):
     elif file_extension.lower() == '.json': 
         with open(file_path, 'r', encoding='utf-8') as file:
             data = json.load(file)
-            corrected_test = extraer_texto_por_id(data)
-            bool=True
-        return corrected_test, bool
+            corrected_text = extraer_texto_por_id(data)
+            return corrected_text, True
+
     else:
-        # Lanza una excepción si no es PDF ni JSON
         raise ValueError(f"El archivo con extensión {file_extension} no es compatible. Solo se aceptan .pdf y .json.")
 
-
-def chunk_text(texto, bool, chunk_size=100):
-    """Divide el texto en fragmentos de tamaño especificado."""
-    if bool:
+def chunk_text(texto, is_json, chunk_size=100):
+    """Divide el texto en fragmentos."""
+    if is_json:
         return texto['text'].tolist()
     else:
         words = texto.split()
         return [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
-
-def connect_to_chroma():
-    """Conecta con la base de datos ChromaDB."""
-    return chromadb.PersistentClient(path="./chroma_db")
-
-def create_or_get_collection(client, collection_name="pdf_chunks"):
-    """Crea o accede a una colección en ChromaDB."""
-    return client.get_or_create_collection(collection_name, metadata={"hnsw:space": "cosine"})
 
 def generate_embeddings(chunks, model):
     """Genera embeddings para los fragmentos de texto."""
@@ -54,6 +57,7 @@ def generate_embeddings(chunks, model):
 
 def store_embeddings_in_chroma(collection, embeddings, chunks):
     """Almacena los embeddings en ChromaDB."""
+    clear_collection(collection)
     collection.upsert(
         documents=chunks,
         metadatas=[{"chunk": chunk} for chunk in chunks],
@@ -87,22 +91,27 @@ def process_pdf():
     os.makedirs('./uploads', exist_ok=True)
     file.save(file_path)
     
-    text, bool = extract_text(file_path)
-    chunks = chunk_text(text, bool)
-    model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2') #acepta varios idiomas
+    text, is_json = extract_text(file_path)
+    chunks = chunk_text(text, is_json)
+    model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
     embeddings = generate_embeddings(chunks, model)
-    collection = create_or_get_collection(connect_to_chroma())
-    store_embeddings_in_chroma(collection, embeddings, chunks)
     
-    return jsonify({"message": "PDF procesado correctamente"})
+    client = connect_to_chroma()
+    collection = create_or_get_collection(client)
+    store_embeddings_in_chroma(collection, embeddings, chunks) 
+    
+    return jsonify({"message": "Archivo procesado correctamente"})
 
 @app.route('/ask_question', methods=['POST'])
 def ask_question():
     question = request.json['question']
     model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
     query_embedding = generate_embeddings([question], model)[0]
-    collection = create_or_get_collection(connect_to_chroma())
+    
+    client = connect_to_chroma()
+    collection = create_or_get_collection(client)
     results = search_in_chroma(collection, query_embedding, top_k=7)
+    
     response = generate_response(results, question)
     
     return jsonify({"response": response})

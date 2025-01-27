@@ -29,7 +29,7 @@ def limpiar_texto(texto):
 
 
 # Función para extraer textos asociados al ID del mensaje
-def extraer_texto_por_id(mensajes):
+def extraer_texto_por_id(datos):
     mensajes = datos.get("messages", [])
     textos_por_id = []
     for mensaje in mensajes:
