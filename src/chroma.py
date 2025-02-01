@@ -8,6 +8,7 @@ import fitz
 import language_tool_python
 from telegram import extraer_texto_por_id
 from datetime import date
+import re
  
  
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -17,14 +18,17 @@ def connect_to_chroma():
     """Conecta con la base de datos ChromaDB."""
     return chromadb.PersistentClient(path="./chroma_db")
  
+
 def create_or_get_collection(client, collection_name="pdf_chunks"):
     """Accede a la colección en ChromaDB."""
     return client.get_or_create_collection(collection_name, metadata={"hnsw:space": "cosine"})
  
+
 def clear_collection(collection):
     """Elimina todos los documentos previos en la colección."""
     collection.delete(ids=collection.get()["ids"])
  
+
 def extract_text(file_path):
     """Extrae el texto de un PDF o JSON y lo corrige gramaticalmente."""
     global is_json
@@ -48,6 +52,7 @@ def extract_text(file_path):
     else:
         raise ValueError(f"El archivo con extensión {file_extension} no es compatible. Solo se aceptan .pdf y .json.")
  
+
 def chunk_text(texto, chunk_size=100):
     """Divide el texto en fragmentos."""
     if is_json:
@@ -56,10 +61,12 @@ def chunk_text(texto, chunk_size=100):
         words = texto.split()
         return [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
  
+
 def generate_embeddings(chunks, model):
     """Genera embeddings para los fragmentos de texto."""
     return model.encode(chunks, show_progress_bar=True)
  
+
 def store_embeddings_in_chroma(collection, embeddings, chunks):
     """Almacena los embeddings en ChromaDB."""
     clear_collection(collection)
@@ -70,22 +77,52 @@ def store_embeddings_in_chroma(collection, embeddings, chunks):
         ids=[str(i) for i in range(len(chunks))]
     )
  
+
 def search_in_chroma(collection, query_embedding, top_k=7):
     """Busca los fragmentos más relevantes en ChromaDB."""
     return collection.query(query_embeddings=[query_embedding], n_results=top_k)
  
+
+def adjust_tense(response):
+    """ Ajusta el tiempo verbal de la respuesta según la fecha del evento. """
+    match = re.search(r"(\d{1,2}) de (\w+) de (\d{4})", response)
+    
+    if match:
+        day, month_text, year = match.groups()
+        month_mapping = {
+            "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
+            "julio": 7, "agosto": 8, "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12,
+            "xaneiro": 1, "febreiro": 2, "marzo": 3, "abril": 4, "maio": 5, "xuño": 6,
+            "xullo": 7, "agosto": 8, "setembro": 9, "outubro": 10, "novembro": 11, "decembro": 12
+        }
+
+        month = month_mapping.get(month_text.lower())
+        event_date = date(int(year), month, int(day))
+
+        if event_date < date.today():
+            response = response.replace("se realizará", "se ha llevado a cabo")
+    
+    return response
+
+
 def generate_response(results, question, model_name='llama3.2'):
     """Genera una respuesta en lenguaje natural usando Ollama."""
     texts = [meta['chunk'] for meta in results['metadatas'][0]]
-    prompt = f"Responde a la pregunta basándote ÚNICAMENTE en el siguiente texto:\n\n{' '.join(texts)}\n\nPregunta: {question}"
-    if is_json: prompt += f"\n\n Asegúrate de dar prioridad a la información más reciente o relevante, especialmente para preguntas relacionadas con fechas o eventos recientes. Teniendo en cuenta que hoy es día: {str(date.today())}"
+    prompt = f"Responde de manera directa y concisa a la pregunta basándote ÚNICAMENTE en el siguiente texto:\n\n{' '.join(texts)}\n\nPregunta: {question}"
+    prompt += "\n\nNo respondas con 'Lo siento', 'No tengo información' ni frases similares. Si hay varias fechas sobre el mismo evento, prioriza la más reciente."
+    
+    if is_json:  
+        prompt += f"\n\nAsegúrate de dar prioridad a la información más reciente o relevante, especialmente para preguntas relacionadas con fechas o eventos recientes. Teniendo en cuenta que hoy es día: {str(date.today())}"
+    
     client = ollama.Client(host="http://localhost:11434")
     try:
         result = client.chat(model=model_name, messages=[{'role': 'user', 'content': prompt}])
-        return result['message']['content']
+        response = result['message']['content']
+        return adjust_tense(response)
     except Exception as e:
         return f"Error al generar respuesta: {e}"
- 
+    
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -108,6 +145,7 @@ def process_pdf():
    
     return jsonify({"message": "Archivo procesado correctamente"})
  
+
 @app.route('/ask_question', methods=['POST'])
 def ask_question():
     question = request.json['question']
@@ -118,7 +156,7 @@ def ask_question():
     collection = create_or_get_collection(client)
     results = search_in_chroma(collection, query_embedding, top_k=7)
     print(results)
-    response = generate_response(results, question)
+    response = generate_response(results, question, model_name='llama3.2')
    
     return jsonify({"response": response})
  
