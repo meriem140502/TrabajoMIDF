@@ -95,15 +95,15 @@
         }
 
         .loader {
-        position: relative;
-        top: 0px;
-        width: 40px;
-        height: 40px;
-        border: 4px solid #0e023a;
-        border-left-color: #f0eded;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-top: 10px;
+            position: relative;
+            top: 0px;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #0e023a;
+            border-left-color: #f0eded;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-top: 10px;
         }
 
         @keyframes spin {
@@ -136,10 +136,22 @@
             font-size: 20px;
             padding: 20px;
             width: 80%;
-            margin-top: 10px;
+            margin-top: 30px;
             margin-bottom: 15px;
             border: 2px solid #0e023a;
             border-radius: 25px;
+        }
+
+        .filename-display {
+            position: fixed;
+            bottom: 20px;  
+            right: 20px;
+            font-size: 18px;
+            color: #0e023a;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Poppins', verdana;
+            background-color: transparent; 
         }
 
         #response {
@@ -195,6 +207,10 @@
                 <button id="btn_no">No</button>
             </div>
         </div>
+    </div>
+
+    <div class="filename-display">
+        🕥 {{ current_file }}
     </div>
 
     <script>

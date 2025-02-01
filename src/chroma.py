@@ -121,11 +121,13 @@ def generate_response(results, question, model_name='llama3.2'):
         return adjust_tense(response)
     except Exception as e:
         return f"Error al generar respuesta: {e}"
-    
+
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    current_file = os.path.basename(__file__)
+    return render_template('index.html', current_file=current_file)
+
  
 @app.route('/process_pdf', methods=['POST'])
 def process_pdf():
