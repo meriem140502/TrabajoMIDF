@@ -6,16 +6,12 @@ import fitz
 import language_tool_python
 from telegram import extraer_texto_por_id
 import json
-import requests  # Para hacer solicitudes HTTP a la API de Hugging Face
-
-# C:\Users\Usuario\Desktop\MIDF\TICs\TrabajoMIDF\src\cuentos.pdf
-# ¿Por qué el pájaro de piedra estaba triste?
+import requests 
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
-# Configuración de Hugging Face
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"  # Reemplaza con el modelo que desees
-HUGGINGFACE_ACCESS_TOKEN = "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"  # Reemplaza con tu token
+HUGGINGFACE_ACCESS_TOKEN = "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"
 
 def extract_text(file_path):
     """Extrae el texto de un PDF y lo corrige gramaticalmente."""
@@ -73,12 +69,10 @@ def search_in_chroma(collection, query_embedding, top_k=7):
 def generate_response_huggingface(results, question):
     """Genera una respuesta en lenguaje natural usando la API de Hugging Face."""
     texts = [meta['chunk'] for meta in results['metadatas'][0]]
-    context = ' '.join(texts)  # Combina los fragmentos de texto en un solo contexto
+    context = ' '.join(texts)
 
-    # Construye el prompt de forma más clara y concisa
     prompt = f"Responde a la siguiente pregunta basándote únicamente en el texto proporcionado:\n\nTexto: {context}\n\nPregunta: {question}\nRespuesta:"
 
-    # Configura la solicitud a la API de Hugging Face
     headers = {
         "Authorization": f"Bearer {HUGGINGFACE_ACCESS_TOKEN}",
         "Content-Type": "application/json"
@@ -86,20 +80,18 @@ def generate_response_huggingface(results, question):
     payload = {
         "inputs": prompt,
         "parameters": {
-            "max_length": 100,  # Limita la longitud de la respuesta
-            "temperature": 0.1,  # Controla la creatividad (valores bajos = más determinista)
-            "do_sample": True,  # Muestreo para evitar repeticiones
+            "max_length": 100, 
+            "temperature": 0.1,  
+            "do_sample": True, 
         }
     }
 
     try:
         response = requests.post(HUGGINGFACE_API_URL, headers=headers, json=payload)
-        response.raise_for_status()  # Lanza una excepción si hay un error HTTP
+        response.raise_for_status()
 
-        # Extrae la respuesta generada
         generated_text = response.json()[0]['generated_text']
 
-        # Filtra la respuesta para eliminar el prompt y quedarse solo con la respuesta
         if "Respuesta:" in generated_text:
             answer = generated_text.split("Respuesta:")[-1].strip()
         elif "</think>" in generated_text:
@@ -124,7 +116,7 @@ def process_pdf():
     
     text, bool = extract_text(file_path)
     chunks = chunk_text(text, bool)
-    model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')  # Modelo multilingüe
+    model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2') 
     embeddings = generate_embeddings(chunks, model)
     collection = create_or_get_collection(connect_to_chroma())
     store_embeddings_in_chroma(collection, embeddings, chunks)
