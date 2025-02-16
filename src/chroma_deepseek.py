@@ -16,7 +16,7 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 
 # Configuración de Hugging Face
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B" 
-HUGGINGFACE_ACCESS_TOKEN = os.getenv("HUGGINGFACE_ACCESS_TOKEN")
+"""HUGGINGFACE_ACCESS_TOKEN = "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" """
 
 def extract_text(file_path):
     """Extrae el texto de un PDF y lo corrige gramaticalmente."""
