@@ -9,14 +9,12 @@ import json
 import requests
 import re
 from datetime import date
-from dotenv import load_dotenv
-load_dotenv()
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
 # Configuración de Hugging Face
-HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B" 
-"""HUGGINGFACE_ACCESS_TOKEN = "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" """
+HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"  # Reemplaza con el modelo que desees
+"""HUGGINGFACE_ACCESS_TOKEN = "escribe_tu_token_aqui """
 
 def extract_text(file_path):
     """Extrae el texto de un PDF y lo corrige gramaticalmente."""

@@ -12,8 +12,8 @@ import re
  
  
 app = Flask(__name__, template_folder='templates', static_folder='static')
-is_json = False # variable global
- 
+is_json = False 
+
 def connect_to_chroma():
     """Conecta con la base de datos ChromaDB."""
     return chromadb.PersistentClient(path="./chroma_db")
