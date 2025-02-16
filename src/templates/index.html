@@ -37,6 +37,20 @@
             z-index: 1000;
         }
 
+        #chroma_llama, #chroma_deepseek, #qdrant_llama {
+            font-size: 23px;
+            color: #FFFFFF;
+            margin-top: 10px;
+            padding: 15px 30px;
+            min-width: 250px;
+            max-width: 90%; 
+            border: 2px solid #0e023a;
+            border-radius: 25px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+
         .container {
             margin-top: 180px;
             width: 100%;
@@ -191,10 +205,17 @@
 <body>
     <h1>Asistente IA</h1>
     <div class="container">
+        <h2 style="color: #0e023a;">Seleccione una opción:</h2>
+        <button id="chroma_llama">Chroma & Llama</button>
+        <button id="chroma_deepseek">Chroma & Deepseek</button>
+        <button id="qdrant_llama">Qdrant & Llama</button>
         <input type="file" id="pdfFile" accept="application/pdf, application/json" class="hidden">
-        <button id="btn_select_pdf"></button>
-        <div id="adjuntar_pdf">Adjuntar archivo</div>
+        <button id="btn_select_pdf" class="hidden"></button>
+        <div id="adjuntar_pdf" class="hidden">Adjuntar archivo</div>
         <div id="loader_pdf" class="loader hidden"></div>
+        <div class="filename-display hidden" id="selected_script">
+            🕥 <span id="script_name"></span>
+        </div>        
         <button id="btn_ask_question" class="hidden">Realizar pregunta</button>
         <input type="text" id="questionInput" class="hidden" placeholder="Escribe tu pregunta aquí...">
         <button id="btn_send_question" class="hidden">Enviar pregunta</button>
@@ -209,15 +230,53 @@
         </div>
     </div>
 
-    <div class="filename-display">
-        🕥 {{ current_file }}
-    </div>
-
     <script>
+        document.getElementById('chroma_llama').addEventListener('click', function() {
+        seleccionarModelo('chroma_llama');
+       });
+    
+        document.getElementById('chroma_deepseek').addEventListener('click', function() {
+        seleccionarModelo('chroma_deepseek');
+        });
+    
+        document.getElementById('qdrant_llama').addEventListener('click', function() {
+        seleccionarModelo('qdrant_llama');
+        });
+
         document.getElementById('btn_select_pdf').addEventListener('click', function() {
             document.getElementById('pdfFile').click();
         });
-    
+
+        const modeloScripts = {
+        chroma_llama: "chroma_llama.py",
+        chroma_deepseek: "chroma_deepseek.py",
+        qdrant_llama: "qdrant_llama.py"
+       };
+
+       function seleccionarModelo(modelo) {
+             fetch('/select_model', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: modelo })
+       })
+       .then(response => response.json())
+       .then(data => {
+        console.log('Modelo seleccionado:', data.model);
+
+        document.getElementById('chroma_llama').classList.add('hidden');
+        document.getElementById('chroma_deepseek').classList.add('hidden');
+        document.getElementById('qdrant_llama').classList.add('hidden');
+        document.querySelector('h2').classList.add('hidden');
+
+        document.getElementById('btn_select_pdf').classList.remove('hidden');
+        document.getElementById('adjuntar_pdf').classList.remove('hidden');
+
+        const scriptName = modeloScripts[modelo] || "Desconocido";
+        document.getElementById('script_name').textContent = scriptName;
+        document.getElementById('selected_script').classList.remove('hidden');
+        })
+        .catch(error => console.error('Error al seleccionar modelo:', error));
+       }
         document.getElementById('pdfFile').addEventListener('change', function() {
             const fileInput = document.getElementById('pdfFile');
             const file = fileInput.files[0];
@@ -237,6 +296,10 @@
                     document.getElementById('btn_select_pdf').classList.add('hidden');
                     document.getElementById('adjuntar_pdf').classList.add('hidden');
                     document.getElementById('btn_ask_question').classList.remove('hidden');
+
+          
+                    document.getElementById('current_file').textContent = file.name;
+                    document.getElementById('selected_file').classList.remove('hidden');
                 });
             }
         });

@@ -132,6 +132,17 @@ def generate_response(results, question, model_name='llama3.2'):
 def index():
     current_file = os.path.basename(__file__)
     return render_template('index.html', current_file=current_file)
+
+
+@app.route('/select_model', methods=['POST'])
+def select_model():
+    data = request.get_json()
+    selected_model = data.get('model', '')
+
+    if selected_model:
+        return jsonify({"model": selected_model})
+    else:
+        return jsonify({"error": "No se proporcionó un modelo"}), 400
  
 
 @app.route('/process_pdf', methods=['POST'])
