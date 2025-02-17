@@ -35,7 +35,7 @@ Para poner en marcha el proyecto es necesario:
   python "chroma & llama3.2.py"
   python "qdrant & llama3.2.py"
 ´´´
-  2.	Despliegue de interfaz web: abrir el navegador e ingresar la dirección IP y puerto correspondiente: 
+  2.	Despliegue de interfaz web: abrir el navegador e ingresar la dirección IP y puerto correspondiente: http://127.0.0.1:5000
   3.	Seleccionar modelo.
   4.	Cargar archivo pdf/json
   5.	Hacer pregunta
