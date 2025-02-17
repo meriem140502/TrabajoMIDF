@@ -27,19 +27,6 @@ ollama pull llama3.2
 pip install deepseek
 ```
 
-## Utilización
-Para poner en marcha el proyecto es necesario:
-  1.	Ejecutar fichero ‘chroma & deepseek.py’ o bien ‘chroma & llama3.2.py’ o ‘qdrant & llama3.2.py’. 
-´´´bash
-  python "chroma & deepseek.py"
-  python "chroma & llama3.2.py"
-  python "qdrant & llama3.2.py"
-´´´
-  2.	Despliegue de interfaz web: abrir el navegador e ingresar la dirección IP y puerto correspondiente: http://127.0.0.1:5000
-  3.	Seleccionar modelo.
-  4.	Cargar archivo pdf/json.
-  5.	Realizar pregunta.
-
 ## Pasos para obtención de Access Token 
   1. Registrarse en Hugging Face
   2. Iniciar sesión en Hugging Face
@@ -53,4 +40,20 @@ Para poner en marcha el proyecto es necesario:
       - Admin si necesitas permisos completos.
   8. Haz clic en Generate Token.
   9. Copia el token y guárdalo en un lugar seguro. No lo compartas con nadie.
+
+
+## Utilización
+Para poner en marcha el proyecto es necesario:
+  1.	Ejecutar fichero ‘chroma & deepseek.py’ o bien ‘chroma & llama3.2.py’ o ‘qdrant & llama3.2.py’. 
+´´´bash
+  python "chroma & deepseek.py"
+  python "chroma & llama3.2.py"
+  python "qdrant & llama3.2.py"
+´´´
+  2.	Despliegue de interfaz web: abrir el navegador e ingresar la dirección IP y puerto correspondiente: http://127.0.0.1:5000
+  3.	Seleccionar modelo.
+  4.	Cargar archivo pdf/json.
+  5.	Realizar pregunta.
+
+
 
