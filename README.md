@@ -3,7 +3,7 @@ Este proyecto consiste en la implementación de un sistema de Retrieval-Augmente
 
 ## Características 
   - **Procesamiento de PDF y JSON** para extraer información relevante. 
-  - **Integración con modelos de lenguaje** (LLaMA 3.2 y DeepSeek) para respuestas coherentes. 
+  - **Integración con modelos de lenguaje** (Llama 3.2 y DeepSeek) para respuestas coherentes. 
   - **Interfaz web interactiva** para facilitar la interacción del usuario.
   - **Uso de ChromaDB o Qdrant** como bases de datos vectoriales.
 
@@ -38,4 +38,4 @@ Para poner en marcha el proyecto es necesario:
   2.	Despliegue de interfaz web: abrir el navegador e ingresar la dirección IP y puerto correspondiente: http://127.0.0.1:5000
   3.	Seleccionar modelo.
   4.	Cargar archivo pdf/json
-  5.	Hacer pregunta
+  5.	Realizar pregunta
