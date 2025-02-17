@@ -14,7 +14,7 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 
 # Configuración de Hugging Face
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"  # Reemplaza con el modelo que desees
-"""HUGGINGFACE_ACCESS_TOKEN = "escribe_tu_token_aqui """
+HUGGINGFACE_ACCESS_TOKEN = "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"
 
 def extract_text(file_path):
     """Extrae el texto de un PDF y lo corrige gramaticalmente."""
@@ -44,7 +44,6 @@ def chunk_text(texto, bool, chunk_size=100):
     else:
         words = texto.split()
         return [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
-
 
 def connect_to_chroma():
     """Conecta con la base de datos ChromaDB."""
@@ -124,6 +123,7 @@ def generate_response_huggingface(results, question):
         response.raise_for_status()
 
         generated_text = response.json()[0]['generated_text']
+        generated_text = adjust_tense(generated_text)
 
         if "Respuesta:" in generated_text or "</think>" in generated_text:
             generated_text = generated_text.replace("</think>", "").strip()
@@ -131,10 +131,13 @@ def generate_response_huggingface(results, question):
         else:
             answer = generated_text.strip()
 
-       
+        # Eliminar duplicados
+        answer = ' '.join(dict.fromkeys(answer.split()))
+
         return answer
     except Exception as e:
         return f"Error al generar respuesta: {e}"
+
 
 
 @app.route('/')
