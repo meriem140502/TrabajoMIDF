@@ -15,10 +15,10 @@ git clone https://github.com/meriem140502/TrabajoMIDF.git cd rag-against-the-mac
 
 ### **2. Instalar dependencias**
 Asegúrate de tener **Python 3.9+** instalado. 
-- Instalación de la herramienta Ollama (https://ollama.com/download)
-- Instalación Llama 3.2 
-- Obtención de token para el uso en huggingface e instalación de DeepSeek
-- Instalación de todas las librerías empleadas en los diferentes archivos de código
+- Instalación de la herramienta Ollama (https://ollama.com/download).
+- Instalación Llama 3.2 .
+- Obtención de token para el uso en huggingface e instalación de DeepSeek.
+- Instalación de todas las librerías empleadas en los diferentes archivos de código.
 ```bash
 # Descargar el modelo LLaMA 3.2
 ollama pull llama3.2
@@ -37,5 +37,5 @@ Para poner en marcha el proyecto es necesario:
 ´´´
   2.	Despliegue de interfaz web: abrir el navegador e ingresar la dirección IP y puerto correspondiente: http://127.0.0.1:5000
   3.	Seleccionar modelo.
-  4.	Cargar archivo pdf/json
-  5.	Realizar pregunta
+  4.	Cargar archivo pdf/json.
+  5.	Realizar pregunta.
